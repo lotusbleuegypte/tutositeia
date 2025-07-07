@@ -1,4 +1,3 @@
-
 import streamlit as st
 import speech_recognition as sr
 import os
@@ -77,10 +76,11 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Menu de navigation
+# Menu de navigation avec clé unique
 tool_choice = st.sidebar.selectbox(
     "🛠️ Choisis ton outil IA :",
-    ["🏠 Accueil", "🎤 Transcription Audio", "🔊 Synthèse Vocale", "📝 Extraction de Texte", "🖼️ Analyse d'Image", "🌐 Extracteur Web", "📊 Générateur de Contenu"]
+    ["🏠 Accueil", "🎤 Transcription Audio", "🔊 Synthèse Vocale", "📝 Extraction de Texte", "🖼️ Analyse d'Image", "🌐 Extracteur Web", "📊 Générateur de Contenu"],
+    key="main_tool_selector"
 )
 
 # Fonctions pour chaque outil
@@ -180,11 +180,10 @@ if tool_choice == "🏠 Accueil":
     """, unsafe_allow_html=True)
 
 elif tool_choice == "🎤 Transcription Audio":
-    st.markdown('<div class="tool-card">', unsafe_allow_html=True)
     st.header("🎤 Transcription Audio Gratuite")
     st.write("Télécharge ton fichier audio et je le convertis en texte !")
     
-    audio_file = st.file_uploader("Choisis ton fichier audio", type=['wav', 'mp3', 'flac', 'm4a'])
+    audio_file = st.file_uploader("Choisis ton fichier audio", type=['wav', 'mp3', 'flac', 'm4a'], key="audio_uploader")
     
     if audio_file:
         st.info(f"📁 Fichier : {audio_file.name} ({audio_file.size} bytes)")
@@ -193,47 +192,44 @@ elif tool_choice == "🎤 Transcription Audio":
             tmp_file.write(audio_file.read())
             tmp_file_path = tmp_file.name
         
-        if st.button("🚀 Transcrire l'audio"):
+        if st.button("🚀 Transcrire l'audio", key="transcribe_btn"):
             with st.spinner("Transcription en cours..."):
                 result = transcribe_audio(tmp_file_path)
-                st.markdown(f'<div class="success-message">✅ Transcription terminée !</div>', unsafe_allow_html=True)
-                st.text_area("📝 Voici ton texte :", result, height=200)
+                st.success("✅ Transcription terminée !")
+                st.text_area("📝 Voici ton texte :", result, height=200, key="transcribe_result")
         
         try:
             os.unlink(tmp_file_path)
         except:
             pass
-    st.markdown('</div>', unsafe_allow_html=True)
 
 elif tool_choice == "🔊 Synthèse Vocale":
-    st.markdown('<div class="tool-card">', unsafe_allow_html=True)
     st.header("🔊 Synthèse Vocale Gratuite")
     st.write("Écris ton texte et je le convertis en audio !")
     
-    text_input = st.text_area("✍️ Écris ton texte ici :", height=100, max_chars=500)
+    text_input = st.text_area("✍️ Écris ton texte ici :", height=100, max_chars=500, key="text_input")
     lang_choice = st.selectbox("🌍 Choisis la langue :", 
                               options=['fr', 'en', 'es', 'de', 'it'],
-                              format_func=lambda x: {'fr': 'Français', 'en': 'Anglais', 'es': 'Espagnol', 'de': 'Allemand', 'it': 'Italien'}[x])
+                              format_func=lambda x: {'fr': 'Français', 'en': 'Anglais', 'es': 'Espagnol', 'de': 'Allemand', 'it': 'Italien'}[x],
+                              key="lang_selector")
     
-    if st.button("🎵 Générer l'audio") and text_input:
+    if st.button("🎵 Générer l'audio", key="tts_btn") and text_input:
         with st.spinner("Génération audio en cours..."):
             audio_buffer = text_to_speech(text_input, lang_choice)
             if audio_buffer:
-                st.markdown(f'<div class="success-message">✅ Audio généré !</div>', unsafe_allow_html=True)
+                st.success("✅ Audio généré !")
                 st.audio(audio_buffer.getvalue(), format='audio/mp3')
-    st.markdown('</div>', unsafe_allow_html=True)
 
 elif tool_choice == "📝 Extraction de Texte":
-    st.markdown('<div class="tool-card">', unsafe_allow_html=True)
     st.header("📝 Extraction de Texte Gratuite")
     st.write("Télécharge ton PDF ou document Word et je récupère le texte !")
     
-    doc_file = st.file_uploader("Choisis ton document", type=['pdf', 'docx'])
+    doc_file = st.file_uploader("Choisis ton document", type=['pdf', 'docx'], key="doc_uploader")
     
     if doc_file:
         st.info(f"📁 Fichier : {doc_file.name} ({doc_file.size} bytes)")
         
-        if st.button("📄 Extraire le texte"):
+        if st.button("📄 Extraire le texte", key="extract_btn"):
             with st.spinner("Extraction en cours..."):
                 if doc_file.type == "application/pdf":
                     result = extract_text_from_pdf(doc_file)
@@ -242,56 +238,51 @@ elif tool_choice == "📝 Extraction de Texte":
                 else:
                     result = "❌ Format de fichier non supporté"
                 
-                st.markdown(f'<div class="success-message">✅ Texte extrait !</div>', unsafe_allow_html=True)
-                st.text_area("📝 Voici ton texte :", result, height=300)
-    st.markdown('</div>', unsafe_allow_html=True)
+                st.success("✅ Texte extrait !")
+                st.text_area("📝 Voici ton texte :", result, height=300, key="extract_result")
 
 elif tool_choice == "🖼️ Analyse d'Image":
-    st.markdown('<div class="tool-card">', unsafe_allow_html=True)
     st.header("🖼️ Analyse d'Image Gratuite")
     st.write("Télécharge ton image et je l'analyse pour toi !")
     
-    image_file = st.file_uploader("Choisis ton image", type=['jpg', 'jpeg', 'png', 'gif', 'bmp'])
+    image_file = st.file_uploader("Choisis ton image", type=['jpg', 'jpeg', 'png', 'gif', 'bmp'], key="image_uploader")
     
     if image_file:
         image = Image.open(image_file)
         st.image(image, caption="Ton image", use_column_width=True)
         
-        if st.button("🔍 Analyser l'image"):
+        if st.button("🔍 Analyser l'image", key="analyze_btn"):
             with st.spinner("Analyse en cours..."):
                 result = analyze_image(image)
-                st.markdown(f'<div class="success-message">✅ Analyse terminée !</div>', unsafe_allow_html=True)
-                st.text_area("📊 Voici l'analyse :", result, height=200)
-    st.markdown('</div>', unsafe_allow_html=True)
+                st.success("✅ Analyse terminée !")
+                st.text_area("📊 Voici l'analyse :", result, height=200, key="analyze_result")
 
 elif tool_choice == "🌐 Extracteur Web":
-    st.markdown('<div class="tool-card">', unsafe_allow_html=True)
     st.header("🌐 Extracteur Web Gratuit")
     st.write("Donne-moi une URL et je récupère le contenu de la page !")
     
-    url_input = st.text_input("🔗 Colle ton URL ici :", placeholder="https://exemple.com")
+    url_input = st.text_input("🔗 Colle ton URL ici :", placeholder="https://exemple.com", key="url_input")
     
-    if st.button("🌐 Extraire le contenu") and url_input:
+    if st.button("🌐 Extraire le contenu", key="web_extract_btn") and url_input:
         if not url_input.startswith(('http://', 'https://')):
             url_input = 'https://' + url_input
             
         with st.spinner("Extraction en cours..."):
             result = extract_web_content(url_input)
-            st.markdown(f'<div class="success-message">✅ Contenu extrait !</div>', unsafe_allow_html=True)
-            st.text_area("📝 Voici le contenu :", result, height=400)
-    st.markdown('</div>', unsafe_allow_html=True)
+            st.success("✅ Contenu extrait !")
+            st.text_area("📝 Voici le contenu :", result, height=400, key="web_result")
 
 elif tool_choice == "📊 Générateur de Contenu":
-    st.markdown('<div class="tool-card">', unsafe_allow_html=True)
     st.header("📊 Générateur de Contenu Gratuit")
     st.write("Génère du contenu automatiquement selon tes besoins !")
     
     content_type = st.selectbox("📝 Type de contenu :", 
-                               ["Email professionnel", "Post LinkedIn", "Article de blog", "Description produit", "Communiqué de presse"])
+                               ["Email professionnel", "Post LinkedIn", "Article de blog", "Description produit", "Communiqué de presse"],
+                               key="content_type_selector")
     
-    topic = st.text_input("💡 Sujet/Mots-clés :", placeholder="Ex: intelligence artificielle, marketing digital...")
+    topic = st.text_input("💡 Sujet/Mots-clés :", placeholder="Ex: intelligence artificielle, marketing digital...", key="topic_input")
     
-    if st.button("✨ Générer le contenu") and topic:
+    if st.button("✨ Générer le contenu", key="generate_btn") and topic:
         with st.spinner("Génération en cours..."):
             templates = {
                 "Email professionnel": f"""
@@ -405,17 +396,17 @@ Contact Presse :
             }
             
             result = templates[content_type]
-            st.markdown(f'<div class="success-message">✅ Contenu généré !</div>', unsafe_allow_html=True)
-            st.text_area("📝 Voici ton contenu :", result, height=400)
+            st.success("✅ Contenu généré !")
+            st.text_area("📝 Voici ton contenu :", result, height=400, key="content_result")
             
             # Bouton de téléchargement
             st.download_button(
                 label="💾 Télécharger le contenu",
                 data=result,
                 file_name=f"{content_type.replace(' ', '_')}_{topic.replace(' ', '_')}.txt",
-                mime="text/plain"
+                mime="text/plain",
+                key="download_btn"
             )
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
 st.markdown("""
